@@ -2,21 +2,27 @@
 #include <string>
 #include <bitset>
 
+/*
+* Trieda reprezentujúca jeden záznam v tabu¾ke RT záznamov
+* Obsahuje ip adresu, masku, next hop ip adresu a èasový údaj lifetime
+*/
 class Route
 {
 private:
-	std::string ipAdress = "";
-	std::string mask = "";
-	std::string nextHopIpAdress = "";
-	std::string time = "";
+	std::string ipAdress;
+	std::string mask;
+	std::string nextHopIpAdress;
+	std::string time;
 	size_t lifeTimeSeconds = 0;
 
 	//Oktety ip adresy
-	std::bitset<8> ipAdressOctet1 = 0;
-	std::bitset<8> ipAdressOctet2 = 0;
-	std::bitset<8> ipAdressOctet3 = 0;
-	std::bitset<8> ipAdressOctet4 = 0;
+	std::bitset<8> ipAdressOctet1;
+	std::bitset<8> ipAdressOctet2;
+	std::bitset<8> ipAdressOctet3;
+	std::bitset<8> ipAdressOctet4;
+
 public:
+	Route();
 	Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time);
 	bool isPartOfSubnet(std::string ipAdress);
 	size_t getPrefix() const;
@@ -28,11 +34,15 @@ public:
 	std::string toString() const;
 	std::string getLifeTimeSeconds() const;
 	~Route();
+
 private:
 	void setIpAdressOctets(std::string ipAdress);
 	void setLifeTimeToSeconds(std::string time);
 };
 
+Route::Route()
+{
+}
 Route::Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time) :
 	ipAdress(ipAdress), mask(mask), nextHopIpAdress(nextHopIpAdress), time(time)
 {
@@ -58,10 +68,25 @@ void Route::setIpAdressOctets(std::string ipAdress)
 	ipAdressOctet4 = std::bitset<8>(std::stoi(octet4));
 }
 
-bool Route::isPartOfSubnet(std::string ipAdress)
+bool Route::isPartOfSubnet(std::string targetIP)
 {
+	std::string octet1 = targetIP.substr(0, targetIP.find("."));
+	targetIP.erase(0, targetIP.find(".") + 1);
+	std::string octet2 = targetIP.substr(0, targetIP.find("."));
+	targetIP.erase(0, targetIP.find(".") + 1);
+	std::string octet3 = targetIP.substr(0, targetIP.find("."));
+	targetIP.erase(0, targetIP.find(".") + 1);
+	std::string octet4 = targetIP;
+
+	std::bitset<8> octet1b(std::stoi(octet1));
+	std::bitset<8> octet2b(std::stoi(octet2));
+	std::bitset<8> octet3b(std::stoi(octet3));
+	std::bitset<8> octet4b(std::stoi(octet4));
+
+	std::string targetIPBinary = octet1b.to_string() + octet2b.to_string() + octet3b.to_string() + octet4b.to_string();
+
 	for (size_t i = 0; i < getPrefix(); i++) {
-		if (ipAdress.at(i) != getIpAdressOctets().at(i)) {
+		if (targetIPBinary.at(i) != this->getIpAdressOctets().at(i)) {
 			return false;
 		}
 	}

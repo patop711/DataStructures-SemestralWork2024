@@ -88,7 +88,6 @@ namespace ds::mm {
     template<typename BlockType>
     BlockType* CompactMemoryManager<BlockType>::allocateMemory()
     {
-        std::cout << static_cast<size_t>(end_ - base_) << std::endl;
         return this->allocateMemoryAt(static_cast<size_t>(end_ - base_));
     }
 
@@ -183,8 +182,6 @@ namespace ds::mm {
     void CompactMemoryManager<BlockType>::shrinkMemory()
     {
         size_t newCapacity = static_cast<size_t>(end_ - base_);
-        std::cout << newCapacity << std::endl;
-        std::endl;
 
         if (newCapacity < CompactMemoryManager<BlockType>::INIT_SIZE)
         {
