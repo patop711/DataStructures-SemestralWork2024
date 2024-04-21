@@ -9,17 +9,22 @@
 class Route
 {
 private:
-	std::string ipAdress;
-	std::string mask;
-	std::string nextHopIpAdress;
-	std::string time;
+	std::string ipAdress = "";
+	std::string mask = "";
+	std::string nextHopIpAdress = "";
+	std::string time = "";
 	size_t lifeTimeSeconds = 0;
 
+	std::string octet_1 = "";
+	std::string octet_2 = "";
+	std::string octet_3 = "";
+	std::string octet_4 = "";
+
 	//Oktety ip adresy
-	std::bitset<8> ipAdressOctet1;
-	std::bitset<8> ipAdressOctet2;
-	std::bitset<8> ipAdressOctet3;
-	std::bitset<8> ipAdressOctet4;
+	std::bitset<8> ipAdressOctet1 = 0;
+	std::bitset<8> ipAdressOctet2 = 0;
+	std::bitset<8> ipAdressOctet3 = 0;
+	std::bitset<8> ipAdressOctet4 = 0;
 
 public:
 	Route();
@@ -33,6 +38,11 @@ public:
 	std::string getIpAdressOctets() const;
 	std::string toString() const;
 	std::string getLifeTimeSeconds() const;
+	std::string getFirstOctet() const;
+	std::string getSecondOctet() const;
+	std::string getThirdOctet() const;
+	std::string getFourthOctet() const;
+	bool operator==(const Route& other) const { return ipAdress == other.ipAdress && mask == other.mask && nextHopIpAdress == other.nextHopIpAdress && time == other.time; }
 	~Route();
 
 private:
@@ -43,6 +53,7 @@ private:
 Route::Route()
 {
 }
+
 Route::Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time) :
 	ipAdress(ipAdress), mask(mask), nextHopIpAdress(nextHopIpAdress), time(time)
 {
@@ -54,12 +65,16 @@ void Route::setIpAdressOctets(std::string ipAdress)
 {
 	// Splitnutie ipAdress do 4 oktetov pomocou "." separatora
 	std::string octet1 = ipAdress.substr(0, ipAdress.find("."));
+	octet_1 = octet1;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet2 = ipAdress.substr(0, ipAdress.find("."));
+	octet_2 = octet2;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet3 = ipAdress.substr(0, ipAdress.find("."));
+	octet_3 = octet3;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet4 = ipAdress;
+	octet_4 = octet4;
 
 	// Konverzia oktetov na bitset
 	ipAdressOctet1 = std::bitset<8>(std::stoi(octet1));
@@ -180,9 +195,33 @@ std::string Route::getTime() const
 	return this->time;
 }
 
+std::string Route::getFirstOctet() const
+{
+	return octet_1;
+}
+
+std::string Route::getSecondOctet() const
+{
+	return octet_2;
+}
+
+std::string Route::getThirdOctet() const
+{
+	return octet_3;
+}
+
+std::string Route::getFourthOctet() const
+{
+	return octet_4;
+}
+
 std::string Route::toString() const
 {
-	return this->ipAdress + " " + this->mask + " " + this->nextHopIpAdress + " " + this->time;
+	return 
+		this->ipAdress + "     " + 
+		this->mask + "      " + 
+		this->nextHopIpAdress + "  " + 
+		this->time;
 }
 
 std::string Route::getLifeTimeSeconds() const

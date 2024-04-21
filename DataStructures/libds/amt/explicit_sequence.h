@@ -19,7 +19,7 @@ namespace ds::amt {
         void clear() override;
         bool equals(const AMT& other) override;
 
-        size_t calculateIndex(const BlockType& data) const override;
+        size_t calculateIndex(BlockType& data) override;
 
         BlockType* accessFirst() const override;
         BlockType* accessLast() const override;
@@ -246,7 +246,7 @@ namespace ds::amt {
     }
 
     template<typename BlockType>
-    size_t ExplicitSequence<BlockType>::calculateIndex(const BlockType& data) const
+    size_t ExplicitSequence<BlockType>::calculateIndex(BlockType& data)
     {
         size_t result = 0;
         BlockType* block = this->findBlockWithProperty([&](BlockType* b)
