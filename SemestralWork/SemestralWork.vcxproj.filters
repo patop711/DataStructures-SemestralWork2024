@@ -35,6 +35,9 @@
     <ClInclude Include="octet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sorting_algorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RT.csv">

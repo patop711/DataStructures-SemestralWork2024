@@ -181,6 +181,7 @@
     <ClInclude Include="libds\mm\compact_memory_manager.h" />
     <ClInclude Include="libds\mm\memory_manager.h" />
     <ClInclude Include="libds\mm\memory_omanip.h" />
+    <ClInclude Include="table_analyzer.h" />
     <ClInclude Include="tests\adt\adt.test.h" />
     <ClInclude Include="tests\adt\array.test.h" />
     <ClInclude Include="tests\adt\list.test.h" />

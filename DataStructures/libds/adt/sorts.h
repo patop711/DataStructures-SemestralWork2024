@@ -159,9 +159,36 @@ namespace ds::adt
     template<typename T>
     void QuickSort<T>::quick(amt::ImplicitSequence<T>& is, std::function<bool(const T&, const T&)> compare, size_t min, size_t max)
     {
-        // TODO 12
-        // po implementacii vymazte vyhodenie vynimky!
-        throw std::runtime_error("Not implemented yet");
+        T pivot = is.access(min + (max - min) / 2)->data_;
+        size_t lavy = min;
+        size_t pravy = max;
+        while (lavy <= pravy) {
+            while (compare(is.access(lavy)->data_, pivot))
+            {
+                ++lavy;
+            }
+            while (pravy > 0 && compare(pivot, is.access(pravy)->data_))
+            {
+                --pravy;
+            }
+            if (lavy <= pravy)
+            {
+                std::swap(is.access(lavy)->data_, is.access(pravy)->data_);
+                ++lavy;
+                if (pravy > 0)
+                {
+                    --pravy;
+                }
+            }
+        }
+        if (min < pravy)
+        {
+            this->quick(is, compare, min, pravy);
+        }
+        if (lavy < max)
+        {
+            this->quick(is, compare, lavy, max);
+        }
     }
 
     template<typename T>

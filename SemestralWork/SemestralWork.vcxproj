@@ -139,6 +139,7 @@
     <ClInclude Include="program.h" />
     <ClInclude Include="route.h" />
     <ClInclude Include="route_table_reader.h" />
+    <ClInclude Include="sorting_algorithm.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RT.csv" />

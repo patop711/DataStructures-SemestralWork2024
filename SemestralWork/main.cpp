@@ -6,7 +6,9 @@
 #include "libds/amt/explicit_hierarchy.h"
 #include "route.h"
 #include "octet.h"
-//#include "libds/mm/memory_manager.h"
+
+#include "libds/adt/array.h"
+
 
 int main()
 {
@@ -20,7 +22,6 @@ int main()
 	*/
 	SetConsoleOutputCP(1250);
 
-	
 	Program* p = new Program();
 	delete p;
 	p = nullptr;

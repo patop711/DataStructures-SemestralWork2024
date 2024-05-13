@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <iomanip>
 #include <bitset>
 
 /*
@@ -13,7 +14,7 @@ private:
 	std::string mask = "";
 	std::string nextHopIpAdress = "";
 	std::string time = "";
-	size_t lifeTimeSeconds = 0;
+	long long lifeTimeSeconds = 0;
 
 	std::string octet_1 = "";
 	std::string octet_2 = "";
@@ -29,21 +30,20 @@ private:
 public:
 	Route();
 	Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time);
-	bool isPartOfSubnet(std::string ipAdress);
-	size_t getPrefix() const;
+	bool operator==(const Route& other) const { return ipAdress == other.ipAdress && mask == other.mask && nextHopIpAdress == other.nextHopIpAdress && time == other.time; }
+	bool operator!=(const Route& other) const { return !(*this == other); }
+	~Route();
+public:
+	bool isPartOfSubnet(std::string ipAdress) const;
 	std::string getIpAdress() const;
 	std::string getMask() const;
 	std::string getNextHopIpAdress() const;
 	std::string getTime() const;
 	std::string getIpAdressOctets() const;
-	std::string toString() const;
+	void toString() const;
+	size_t getLifeTimeSecondsInt() const;
 	std::string getLifeTimeSeconds() const;
-	std::string getFirstOctet() const;
-	std::string getSecondOctet() const;
-	std::string getThirdOctet() const;
-	std::string getFourthOctet() const;
-	bool operator==(const Route& other) const { return ipAdress == other.ipAdress && mask == other.mask && nextHopIpAdress == other.nextHopIpAdress && time == other.time; }
-	~Route();
+	size_t getPrefix() const;
 
 private:
 	void setIpAdressOctets(std::string ipAdress);
@@ -65,16 +65,12 @@ void Route::setIpAdressOctets(std::string ipAdress)
 {
 	// Splitnutie ipAdress do 4 oktetov pomocou "." separatora
 	std::string octet1 = ipAdress.substr(0, ipAdress.find("."));
-	octet_1 = octet1;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet2 = ipAdress.substr(0, ipAdress.find("."));
-	octet_2 = octet2;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet3 = ipAdress.substr(0, ipAdress.find("."));
-	octet_3 = octet3;
 	ipAdress.erase(0, ipAdress.find(".") + 1);
 	std::string octet4 = ipAdress;
-	octet_4 = octet4;
 
 	// Konverzia oktetov na bitset
 	ipAdressOctet1 = std::bitset<8>(std::stoi(octet1));
@@ -83,7 +79,7 @@ void Route::setIpAdressOctets(std::string ipAdress)
 	ipAdressOctet4 = std::bitset<8>(std::stoi(octet4));
 }
 
-bool Route::isPartOfSubnet(std::string targetIP)
+bool Route::isPartOfSubnet(std::string targetIP) const
 {
 	std::string octet1 = targetIP.substr(0, targetIP.find("."));
 	targetIP.erase(0, targetIP.find(".") + 1);
@@ -114,7 +110,7 @@ void Route::setLifeTimeToSeconds(std::string time)
 	{
 		//konverzia hodiny na sekundy
 		std::string hour = time.substr(0, 1);
-		lifeTimeSeconds = std::stoi(hour) * 3600;
+		lifeTimeSeconds = static_cast<size_t>(std::stoi(hour)) * 3600;
 
 	}
 	if (time.length() >= 7)
@@ -131,7 +127,7 @@ void Route::setLifeTimeToSeconds(std::string time)
 		int minutesInt = std::stoi(minutes);
 		int secondsInt = std::stoi(seconds);
 
-		lifeTimeSeconds = hoursInt * 3600 + minutesInt * 60 + secondsInt;
+		lifeTimeSeconds = static_cast<size_t>(hoursInt) * 3600 + static_cast<unsigned long long>(minutesInt) * 60 + secondsInt;
 	}
 	//konverzia tyzdne a dni na sekundy
 	if(time.find("w") != std::string::npos && time.find("d") != std::string::npos)
@@ -146,7 +142,7 @@ void Route::setLifeTimeToSeconds(std::string time)
 		int weeksInt = std::stoi(weeks);
 		int daysInt = std::stoi(days);
 
-		lifeTimeSeconds = weeksInt * 604800 + daysInt * 86400;
+		lifeTimeSeconds = static_cast<size_t>(weeksInt) * 604800 + static_cast<unsigned long long>(daysInt) * 86400;
 	}
 	//konverzia dni a hodin na sekundy
 	if (time.find("d") != std::string::npos && time.find("h") != std::string::npos)
@@ -161,7 +157,7 @@ void Route::setLifeTimeToSeconds(std::string time)
 		int daysInt = std::stoi(days);
 		int hoursInt = std::stoi(hours);
 
-		lifeTimeSeconds = daysInt * 86400 + hoursInt * 3600;
+		lifeTimeSeconds = static_cast<size_t>(daysInt) * 86400 + static_cast<unsigned long long>(hoursInt) * 3600;
 	}
 }
 
@@ -195,38 +191,19 @@ std::string Route::getTime() const
 	return this->time;
 }
 
-std::string Route::getFirstOctet() const
+void Route::toString() const
 {
-	return octet_1;
-}
-
-std::string Route::getSecondOctet() const
-{
-	return octet_2;
-}
-
-std::string Route::getThirdOctet() const
-{
-	return octet_3;
-}
-
-std::string Route::getFourthOctet() const
-{
-	return octet_4;
-}
-
-std::string Route::toString() const
-{
-	return 
-		this->ipAdress + "     " + 
-		this->mask + "      " + 
-		this->nextHopIpAdress + "  " + 
-		this->time;
+	std::cout << "IP: " << this->ipAdress << " MASKA: " << "/" << this->mask << " NEXT-HOP: " << this->nextHopIpAdress << " TTL: " << this->time << std::endl;
 }
 
 std::string Route::getLifeTimeSeconds() const
 {
 	return std::to_string(lifeTimeSeconds);
+}
+
+size_t Route::getLifeTimeSecondsInt() const
+{
+	return lifeTimeSeconds;
 }
 
 Route::~Route()

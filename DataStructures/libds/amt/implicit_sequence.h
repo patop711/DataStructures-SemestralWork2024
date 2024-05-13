@@ -43,7 +43,6 @@ namespace ds::amt {
 
 		virtual size_t indexOfNext(size_t currentIndex) const;
 		virtual size_t indexOfPrevious(size_t currentIndex) const;
-		/*bool operator==(const ImplicitSequence& other) const;*/ //<-- upravene mnou
 
 	public:
 		class ImplicitSequenceIterator
@@ -310,24 +309,5 @@ namespace ds::amt {
 		const size_t size = this->size();
 		return size != 0 ? currentIndex <= 0 ? size - 1 : currentIndex - 1 : INVALID_INDEX;
 	}
-
-	/*template<typename DataType>
-	bool ImplicitSequence<DataType>::operator==(const ImplicitSequence& other) const
-	{
-		if (this->size() != other.size())
-		{
-			return false;
-		}
-
-		for (size_t i = 0; i < this->size(); ++i)
-		{
-			if (this->access(i)->data_ != other.access(i)->data_)
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}*/
 
 }

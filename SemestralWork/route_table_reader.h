@@ -5,17 +5,20 @@
 #include "Route.h"
 #include "libds/amt/implicit_sequence.h"
 #include "libds/amt/explicit_hierarchy.h"
+#include "libds/adt/table.h"
 #include "octet.h"
 
-
+/*
+* Trieda ktorá spracúvava dáta zo súboru a poskytuje operacie
+*/
 class RoutingTable
 {
 public:
 	RoutingTable();
 	~RoutingTable();
 	void readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route>& sekvencia);
-	//void readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet>& hierarchia);
-	void _readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet>* hierarchia, ds::amt::ImplicitSequence<Route*> sekvencia);
+	void readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet>* hierarchia, ds::amt::ImplicitSequence<Route*>& sekvencia);
+	void loadDataToTable(ds::adt::HashTable<std::string, Route>* table, ds::amt::ImplicitSequence<Route> routes);
 };
 
 RoutingTable::RoutingTable()
@@ -64,7 +67,7 @@ void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::Implici
 	csv.close();
 }
 
-void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet>* hierarchia, ds::amt::ImplicitSequence<Route*> sekvencia)
+void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet>* hierarchia, ds::amt::ImplicitSequence<Route*>& sekvencia)
 {
 	std::ifstream csv(menoSuboru);
 	std::string line = "";
@@ -85,10 +88,6 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 	size_t indexOfOktet4 = 0; //<-- index oktetu 4
 	size_t indexOfPrefixOktet5 = 0; //<-- index prefixu
 
-	//bool firstRun = true;
-	//size_t velkostRootBloku = hierarchia->accessRoot()->sons_->size();
-	//std::cout << "Velkost root bloku: " << velkostRootBloku << std::endl;
-
 	auto koren = hierarchia->accessRoot(); //<-- koren
 	ds::amt::MultiWayExplicitHierarchyBlock<Octet>* blockOktet1 = koren; //<-- oktet1
 	ds::amt::MultiWayExplicitHierarchyBlock<Octet>* blockOktet2 = koren; //<-- oktet2
@@ -96,7 +95,6 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 	ds::amt::MultiWayExplicitHierarchyBlock<Octet>* blockOktet4 = koren; //<-- oktet4
 	ds::amt::MultiWayExplicitHierarchyBlock<Octet>* blockOktet5 = koren; //<-- prefix
 
-	//std::cout << "Velkost root bloku pt.2: " << velkostRootBloku << std::endl;
 
 	if (csv.is_open())
 	{
@@ -126,61 +124,11 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 
 				Route* route = new Route(ipAdress, mask, nextHopIpAdress, time);
 				sekvencia.insertLast().data_ = route;
-				//auto& lastRoute = *sekvencia.accessLast();
 				tokens.clear();
 				ss.clear();
 
-				//if (firstRun)
-				//{
-				//	//Vytvorenie hierarchie v ktorej sa ešte žiadne oktety alebo prefixy nevyskytujú
-				//		/* TO ZNAMENA ZE HIERACHIA VYZERA ZATIAL LEN TAKTO ZE TAM JE LEN KOREŇ A PRIDA SA ZATIAL LEN JEDEN ZAZNAM OKTETOV/PREFIXOV/ZAZNAMOV:
-				//		*						_____
-				//		*					   |KOREŇ|
-				//		*						-----
-				//		*/
-				//	for (size_t i = 1; i <= 5; i++)
-				//	{
-				//		if (i == 1)
-				//		{
-				//			blockOktet1 = &hierarchia->emplaceSon(*hierarchia->accessRoot(), indexOfOktet1);
-				//			blockOktet1->data_ = Octet(oktet1);
-				//			indexOfOktet1++;
-				//		}
-				//		else if (i == 2)
-				//		{
-				//			//indexOfOktet2 = blockOktet2->sons_.size();
-				//			blockOktet2 = &hierarchia->emplaceSon(*blockOktet1, indexOfOktet2);
-				//			blockOktet2->data_ = Octet(oktet2);
-				//			indexOfOktet2++;
-				//		}
-				//		else if (i == 3)
-				//		{
-				//			//indexOfOktet3 = blockOktet3->sons_.size();
-				//			blockOktet3 = &hierarchia->emplaceSon(*blockOktet2, indexOfOktet3);
-				//			blockOktet3->data_ = Octet(oktet3);
-				//			indexOfOktet3++;
-				//		}
-				//		else if (i == 4)
-				//		{
-				//			//indexOfOktet4 = blockOktet4->sons_.size();
-				//			blockOktet4 = &hierarchia->emplaceSon(*blockOktet3, indexOfOktet4);
-				//			blockOktet4->data_ = Octet(oktet4);
-				//			indexOfOktet4++;
-				//		}
-				//		else if (i == 5)
-				//		{
-				//			blockOktet5 = &hierarchia->emplaceSon(*blockOktet4, indexOfPrefixOktet5);
-				//			blockOktet5->data_ = Octet(prefix, &sekvencia.accessLast()->data_);
-				//			indexOfPrefixOktet5++;
-				//			//std::cout << "Prefix: " << prefix << " " << blockOktet5->data_.referenceToRoute->toString() << " : velkost root Bloku" << velkostRootBloku << std::endl;
-				//		}
-				//	}
-				//	firstRun = false;
-				//}
-				//else
-				//{
-					//Vytvorenie hierarchie v ktorej sa už vyskytujú ostatné vrcholy
-					/* TO ZNAMENA ZE HIERACHIA VYZERA LEN TAKTO ZATIAL:
+					//Vytvorenie hierarchie v ktorej sa už vyskytujú vrcholy oktetov a prefixov kde v prefix je odkaaz na záznam z IS
+					/*
 					*						_____
 					*					   |KOREŇ|
 					*						-----
@@ -210,8 +158,7 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 						*/
 						bool foundOktet1 = false;
 						size_t velkostKorena = hierarchia->accessRoot()->sons_->size();
-						/*std::cout << "Velkost root bloku init oktet 1: " << velkostKorena << std::endl;
-						std::cout << "IndexOfOktet1 pred: " << indexOfOktet1 << std::endl;*/
+
 						if (velkostKorena == 0) //<-- ak sa este nevytvorila ziadna vetva oktetov a prefixu ktorý je spojeny zo záznamom z IS
 						{
 							//indexOfOktet1 = blockOktet1->sons_->size();
@@ -221,7 +168,7 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 							indexOfOktet2 = 0;
 							indexOfOktet3 = 0;
 							indexOfOktet4 = 0;
-							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu su nastavene na nulu zatial pre istotu
+							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu su nastavene na nulu
 
 							blockOktet1 = &hierarchia->emplaceSon(*koren, indexOfOktet1); //<-- vytvorenie oktetu 1 od korena
 							blockOktet1->data_ = Octet(oktet1); //<-- priradenie dát do oktetu 1
@@ -259,29 +206,22 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 
 								blockOktet1 = hierarchia->accessSon(*hierarchia->accessRoot(), indexOfOktet1 - 1); //<-- nastavíme blockOktet1 na oktet 1 ktorý sme práve vytvorili
 								//indexOfOktet1 - 1 je preto aby sme sa dostali na oktet 1 ktorý sme práve vytvorili(t.j. môže byt napríklad velkost
-								//korena 1 a ked vytvorime dalsi tak sa zvysi velkost korena na 2 a my chceme aby sme sa dostali na oktet 1 ktorý sme práve vytvorili)
+								//korena 1 a ked vytvorime dalsi tak sa zvysi velkost korena na 2 a my chceme aby sme sa dostali na oktet 1 ktorý sme práve vytvorili
 							}
-							//problem ze to je v cykle???
 						}
-						/*std::cout << "Oktet 1: " << blockOktet1->data_.octet << std::endl;
-						std::cout << "IndexOfOktet1 po: " << indexOfOktet1 << std::endl;
-						std::cout << "Velkost bloku post oktet 1: " << hierarchia->accessRoot()->sons_->size() << std::endl;*/
 					}
 					else if (i == 2) //<-- ak sa jedná o druhý oktet
 					{
 						bool foundOktet2 = false;
 						size_t velkostBlokuOktet1 = blockOktet1->sons_->size();
-						/*std::cout << "Velkost bloku init oktet 2: " << velkostBlokuOktet1 << std::endl;
-						std::cout << "IndexOfOktet2 pred: " << indexOfOktet2 << std::endl;*/
+
 						if (velkostBlokuOktet1 == 0) //<-- ak sa ešte nevytvorili žiadne vetvy oktetov a prefixov v aktuaálnom oktete(blockOktet1)
 						{
-							//indexOfOktet1 = blockOktet1->sons_->size();
-							//indexOfOktet1, 
 							indexOfOktet2 = 0; //<-- index oktetu 2
 							indexOfOktet3 = 0; //<-- index oktetu 3
 							indexOfOktet4 = 0; //<-- index oktetu 4
 							indexOfPrefixOktet5 = 0; //<-- index prefixu
-							//<-- indexy oktetov a prefixu sa nastavia znova na nulu kedze sme už vytvorili nový oktet 1 // <-- indexy oktetov a prefixu sú nastavené na nulu zatial pre istotu
+							//<-- indexy oktetov a prefixu sa nastavia znova na nulu kedze sme už vytvorili nový oktet 1
 
 							blockOktet2 = &hierarchia->emplaceSon(*blockOktet1, indexOfOktet2); //<-- vytvorenie oktetu 2 ako potomka od oktetu 1
 							blockOktet2->data_ = Octet(oktet2); //<-- priradenie dát do oktetu 2
@@ -318,23 +258,19 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 								blockOktet2 = hierarchia->accessSon(*blockOktet1, indexOfOktet2 - 1); //<-- nastavíme refernciu na blockOktet2 na oktet 2 ktorý sme práve vytvorili
 							}
 						}
-						/*std::cout << "Oktet 2: " << oktet2 << std::endl;
-						std::cout << "IndexOfOktet2 po: " << indexOfOktet2 << std::endl;
-						std::cout << "Velkost bloku post oktet 2: " << blockOktet1->sons_->size() << std::endl;*/
 					}
 					else if (i == 3) //<-- ak sa jedná o tretí oktet
 					{
 						bool foundOktet3 = false;
 						size_t velkostBlokuOktet2 = blockOktet2->sons_->size(); //<-- zistíme veľkosť bloku oktetov 2, preto lebo sa nachádzame v oktete 2 a chceme vedieť koľko oktetov 3 sa v ňom nachádza //VZDY TO PADNE TU!!!
-						/*std::cout << "Veľkosť bloku init oktet 3: " << velkostBlokuOktet2 << std::endl;
-						std::cout << "IndexOfOktet3 pred: " << indexOfOktet3 << std::endl;*/
+
 						if (velkostBlokuOktet2 == 0) //<-- ak sa ešte nevytvorili žiadne vetvy oktetov alebo prefixov v aktuaálnom oktete predka(blockOktet2)
 						{
 							//indexOfOktet1 = blockOktet1->sons_->size();
 							//indexOfOktet1, 
 							indexOfOktet3 = 0;
 							indexOfOktet4 = 0;
-							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu sú nastavené na nulu zatial pre istotu
+							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu sú nastavené na nulu 
 
 							blockOktet3 = &hierarchia->emplaceSon(*blockOktet2, indexOfOktet3); //<-- vytvorenie oktetu 3 ako potomka od oktetu 2
 							blockOktet3->data_ = Octet(oktet3); //<-- priradenie dát do oktetu 3
@@ -370,27 +306,16 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 								blockOktet3 = hierarchia->accessSon(*blockOktet2, indexOfOktet3 - 1); //<-- nastavíme referenciu blockOktet3 na oktet 3 ktorý sme práve vytvorili
 							}
 						}
-						/*std::cout << "Oktet 3: " << oktet3 << std::endl;
-						std::cout << "IndexOfOktet3 po: " << indexOfOktet3 << std::endl;
-						std::cout << "Velkost root bloku post oktet 3: " << blockOktet2->sons_->size() << std::endl;*/
 					}
 					else if (i == 4) //<-- ak sa jedná o štvrtý oktet
 					{
-						/*if (blockOktet2->sons_->size() == 0)
-						{
-							blockOktet3 = &hierarchia->emplaceSon(*blockOktet2, indexOfOktet3);
-							blockOktet3->data
-						}*/
 						bool foundOktet4 = false;
 						size_t velkostBlokuOktet3 = blockOktet3->sons_->size(); //<-- zistíme veľkosť bloku oktetov 3, preto lebo sa nachádzame v oktete 3 a chceme vedieť koľko oktetov 4 sa v ňom nachádza
-						/*std::cout << "Velkost bloku init oktet 4: " << velkostBlokuOktet3 << std::endl;
-						std::cout << "IndexOfOktet4 pred: " << indexOfOktet4 << std::endl;*/
+
 						if (velkostBlokuOktet3 == 0) //<-- ak sa ešte nevytvorili žiadne vetvy oktetov alebo prefixov v aktuaálnom oktete predka(blockOktet3)
 						{
-							//indexOfOktet1 = blockOktet1->sons_->size();
-							//indexOfOktet1, 
 							indexOfOktet4 = 0;
-							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu sú nastavené na nulu zatial pre istotu
+							indexOfPrefixOktet5 = 0; //<-- indexy oktetov a prefixu sú nastavené na nulu 
 
 							blockOktet4 = &hierarchia->emplaceSon(*blockOktet3, indexOfOktet4); //<-- vytvorenie oktetu 4 ako potomka od oktetu 3
 							blockOktet4->data_ = Octet(oktet4); //<-- priradenie dát do oktetu 4
@@ -423,41 +348,27 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 								blockOktet4 = hierarchia->accessSon(*blockOktet3, indexOfOktet4 - 1); //<-- nastavíme blockOktet4 na oktet 4 ktorý sme práve vytvorili
 							}
 						}
-						/*std::cout << "Oktet 4: " << oktet4 << std::endl;
-						std::cout << "IndexOfOktet4 po: " << indexOfOktet4 << std::endl;
-						std::cout << "Velkost root bloku post oktet 4: " << blockOktet3->sons_->size() << std::endl;*/
 					}
 					else if (i == 5) //<-- ak sa jedná o prefix ktorý je spojený so záznamom z IS
 					{
 						bool foundPrefix = false;
-						/*if (blockOktet2->sons_->size() == 0)
-						{
-							blockOktet3 = &hierarchia->emplaceSon(*blockOktet2, indexOfOktet3);
-							blockOktet3->data
-						}*/
+
 						size_t velkostBlokuOktet4 = blockOktet4->sons_->size(); //<-- zistíme veľkosť bloku oktetov 4, preto lebo sa nachádzame v oktete 4 a chceme vedieť koľko prefixov sa v ňom nachádza
-						/*std::cout << "Velkost bloku post oktet 5: " << velkostBlokuOktet4 << std::endl;
-						std::cout << "IndexOfPrefixOktet5 pred: " << indexOfPrefixOktet5 << std::endl;*/
+
 						if (velkostBlokuOktet4 == 0) //<-- ak sa ešte nevytvorili žiadne vetvy oktetov alebo prefixov v aktuaálnom oktete predka(blockOktet4)
 						{
-							//indexOfOktet1 = blockOktet1->sons_->size();
-							//indexOfOktet1, 
-							indexOfPrefixOktet5 = 0; //<-- index prefixu sú nastavený na nulu zatial pre istotu
+							indexOfPrefixOktet5 = 0; //<-- index prefixu sú nastavený na nulu
 
 							blockOktet5 = &hierarchia->emplaceSon(*blockOktet4, indexOfPrefixOktet5); //<-- vytvorenie prefixu ako potomka od oktetu 4
 							blockOktet5->data_ = Octet(prefix, sekvencia.accessLast()->data_); //<-- priradenie dát do prefixu
 							indexOfPrefixOktet5++; //<-- inkrementacia indexu prefixu o +1
 
 							blockOktet5 = hierarchia->accessSon(*blockOktet4, indexOfPrefixOktet5 - 1); //<-- nastavenie blockOktet5 na prefix ktorý sme práve vytvorili
-
-							/*std::cout << "(Prvý krat) Prefix: " << blockOktet5->data_.octet << " " << blockOktet5->data_.referenceToRoute->toString() << " " << std::endl;*/
-
 						}
 						else //<-- ak sa už vytvorili nejaké vetvy oktetov a prefixov v aktuálnom oktete predka(blockOktet4)
 						{
 							for (size_t j = 0; j < velkostBlokuOktet4; j++) //<-- prejdeme for cyklom cez vsetky bloky prefixov ktoré sa nachádzajú v oktete 4
 							{
-								//hierarchia->accessSon(*blockOktet1, j)->data_.octet == oktet2
 								if (blockOktet4->sons_->access(j)->data_->data_.octet._Equal(prefix)) //<-- ak sa v oktete 4 nenachádza oktet(prefix) 4 s rovnakou hodnotou ako je oktet 4 z IS
 								{
 									foundPrefix = true; //<-- nastavíme foundPrefix na true
@@ -473,12 +384,6 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 
 								blockOktet5 = hierarchia->accessSon(*blockOktet4, indexOfPrefixOktet5 - 1); //<-- nastavíme blockOktet5 na prefix ktorý sme práve vytvorili
 							}
-
-
-							/*std::cout << "[" << blockOktet5->data_.octet << "] " << " " << blockOktet5->data_.referenceToRoute->toString() << std::endl;
-							std::cout << "Prefix: " << prefix << std::endl;
-							std::cout << "IndexOfPrefixOktet5 po: " << indexOfPrefixOktet5 << std::endl;
-							std::cout << "Velkost root bloku post oktet 5: " << blockOktet4->sons_->size() << std::endl;*/
 						}
 					}
 
@@ -492,6 +397,25 @@ void RoutingTable::_readTableForHierarchy(std::string menoSuboru, ds::amt::Multi
 		throw std::runtime_error("Súbor " + menoSuboru + " sa nepodarilo otvoriť, alebo neexistuje!");
 	}
 	csv.close();
+}
+
+void RoutingTable::loadDataToTable(ds::adt::HashTable<std::string, Route>* table, ds::amt::ImplicitSequence<Route> routes)
+{
+	auto it = routes.begin();
+	auto end = routes.end();
+
+	while (it != end)
+	{
+		table->insert((*it).getNextHopIpAdress(), *it);
+		++it;
+	}
+
+	//for (size_t i = 0; i < routes.size(); i++)
+	//{
+	//	//std::cout << routes.access(i)->data_.getIpAdress() << std::endl;
+	//	table->insert(routes.access(i)->data_.getNextHopIpAdress(), routes.access(i)->data_);
+	//}
+	std::cout << table->size() << std::endl;
 }
 
 RoutingTable::~RoutingTable()
