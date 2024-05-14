@@ -27,10 +27,10 @@ public:
 
 	static bool matchWithAddress(TypUdaju kontrolovany, TypPredikatu& predikat)
 	{
-		return kontrolovany.isPartOfSubnet(predikat);
+		return kontrolovany->isPartOfSubnet(predikat);
 	}
 	static bool matchLifetime(TypUdaju kontrolovany, TypPredikatu& predikat)
 	{
-		return kontrolovany.getLifeTimeSeconds()._Equal(predikat);
+		return kontrolovany->getLifeTimeSeconds()._Equal(predikat);
 	}
 };

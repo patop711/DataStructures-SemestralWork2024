@@ -16,9 +16,12 @@ class Program
 {
 private:
 	bool runProgram = true;
+	bool hierarchyLoaded = false;
 	std::string menoSuboru;
-	ds::amt::ImplicitSequence<Route> zoznam;
-	ds::amt::MultiWayExplicitHierarchy<Octet> hierarchia;
+	ds::amt::ImplicitSequence<Route*> zoznam;
+	ds::amt::ImplicitSequence<Route*> hierarchySequence;
+	ds::amt::MultiWayExplicitHierarchy<Octet*> hierarchia;
+	Octet* koren = nullptr;
 
 public:
 	Program();
@@ -26,7 +29,7 @@ public:
 	void runStage1();
 	void runStage2();
 	void runStage3();
-	void stage_4(bool& zobrazujZaznamy, ds::amt::ImplicitSequence<Route> sekvencia) const;
+	void stage_4(ds::amt::ImplicitSequence<Route*> sekvencia) const;
 	//void runStage5Bonus();<-- TODO
 	~Program();
 };
@@ -86,39 +89,6 @@ void Program::run()
 			break;
 
 		}
-		/*if (input == "1")
-		{
-			system("cls");
-			this->runStage1();
-		}
-		else if (input == "2")
-		{
-			system("cls");
-			this->runStage2();
-		}
-		else if (input == "3")
-		{
-			system("cls");
-			this->runStage3();
-		}
-		else if (input == "4")
-		{
-			system("cls");
-			std::cout << "Zadajte nazov CSV suboru s routovacou tabulkou: ";
-			std::cin >> this->menoSuboru;
-			this->zoznam.clear();
-			this->hierarchia.clear();
-			this->run();
-
-		}
-		else if (input == "5")
-		{
-			this->runProgram = false;
-		}
-		else
-		{
-			std::cout << "Zadali ste nesprávnu operáciu" << std::endl;
-		}*/
 	}
 
 
@@ -126,9 +96,12 @@ void Program::run()
 
 void Program::runStage1()
 {
-	this->zoznam.clear();
-	RoutingTable().readTableForSequence(this->menoSuboru, this->zoznam);
-	ds::amt::ImplicitSequence<Route> platneZaznamy;
+	//this->zoznam.clear();
+	if (this->zoznam.isEmpty())
+	{
+		RoutingTable().readTableForSequence(this->menoSuboru, this->zoznam);
+	}
+	ds::amt::ImplicitSequence<Route*> platneZaznamy;
 	bool runStage1Program = true;
 	std::string input;
 	while (runStage1Program)
@@ -150,9 +123,9 @@ void Program::runStage1()
 			std::cout << "Zadajte IP adresu v tvare 0-255.0-255.0-255.0-255: ";
 			std::cin >> ip;
 
-			Algorithms<ds::amt::ImplicitSequence<Route>::IteratorType, Route, std::string>::filter(zoznam.begin(), zoznam.end(),
+			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam.begin(), zoznam.end(),
 				[&ip](auto zdroj) -> bool {
-					return Algorithms<ds::amt::ImplicitSequence<Route>::IteratorType, Route, std::string>::matchWithAddress(zdroj, ip);
+					return Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::matchWithAddress(zdroj, ip);
 				},
 				[&platneZaznamy](auto zaznam) -> void {
 					platneZaznamy.insertLast().data_ = zaznam;
@@ -169,9 +142,9 @@ void Program::runStage1()
 			std::cin >> lifetime;
 			system("cls");
 
-			Algorithms<ds::amt::ImplicitSequence<Route>::IteratorType, Route, std::string>::filter(zoznam.begin(), zoznam.end(),
+			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam.begin(), zoznam.end(),
 				[&lifetime](auto zdroj) -> bool {
-					return Algorithms<ds::amt::ImplicitSequence<Route>::IteratorType, Route, std::string>::matchLifetime(zdroj, lifetime);
+					return Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::matchLifetime(zdroj, lifetime);
 				},
 				[&platneZaznamy](auto zaznam) -> void {
 					platneZaznamy.insertLast().data_ = zaznam;
@@ -190,33 +163,19 @@ void Program::runStage1()
 			std::cout << "Zadali ste nesprávnu operáciu" << std::endl;
 		}
 
-
-		while (zobrazujZaznamy)
+		if (platneZaznamy.size() == 0 && (input == "1" || input == "2"))
 		{
-			if (platneZaznamy.size() == 0 && (input == "1" || input == "2"))
+			std::cout << "Neboli nájdené žiadne zhody" << std::endl;
+		}
+		else
+		{
+			for (auto& udaj : platneZaznamy)
 			{
-				std::cout << "Neboli nájdené žiadne zhody" << std::endl;
-			}
-			else
-			{
-				for (auto& udaj : platneZaznamy)
-				{
-					udaj.toString();
-				}
-
-				this->stage_4(zobrazujZaznamy, platneZaznamy);
-			}
-			/*std::cout << "Chcete pokraèova v zobrazení záznamov? [A/N]" << std::endl;
-			std::string pokracovat;
-			std::cin >> pokracovat;
-
-			if (pokracovat._Equal("N") || pokracovat._Equal("n"))
-			{
-				UkonciZobrazenieZaznamov = true;
+				udaj->toString();
 			}
 
-			}*/
-
+			this->stage_4(platneZaznamy);
+			platneZaznamy.clear();
 		}
 	}
 }
@@ -233,14 +192,18 @@ void Program::runStage2()
 	std::string prefix;
 
 	bool runStage2Program = true;
-	this->hierarchia.clear();
-	ds::amt::ImplicitSequence<Route*> rZoznam;
+	//this->hierarchia.clear();
+	//ds::amt::ImplicitSequence<Route*> rZoznam;
 
-	auto koren = Octet("RT KOREÒ"); // <-- REPREZENTUJE KOREÒ HIERARCHIE
-	this->hierarchia.emplaceRoot().data_ = koren;
-	RoutingTable().readTableForHierarchy(this->menoSuboru, &hierarchia, rZoznam);
+	if (!this->hierarchyLoaded)
+	{
+		this->hierarchyLoaded = true;
+		this->koren = new Octet("RT KOREÒ"); // <-- REPREZENTUJE KOREÒ HIERARCHIE
+		this->hierarchia.emplaceRoot().data_ = koren;
+		RoutingTable().readTableForHierarchy(this->menoSuboru, &this->hierarchia, this->hierarchySequence);
+	}
 
-	ds::amt::MultiWayExplicitHierarchyBlock<Octet>* aktualnaVetva = this->hierarchia.accessRoot();
+	ds::amt::MultiWayExplicitHierarchyBlock<Octet*>* aktualnaVetva = this->hierarchia.accessRoot();
 	std::string inputOperation;
 	while (runStage2Program)
 	{
@@ -249,50 +212,50 @@ void Program::runStage2()
 		{
 
 		case 0:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
 		case 1:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" << " IP: " << oktet1 << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" << " IP: " << oktet1 << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
 		case 2:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
 		case 3:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
 		case 4:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << "->" << oktet4 << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << "->" << oktet4 << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
 		case 5:
-			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_.octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << "->" << oktet4 << "->" << prefix << std::endl;
+			std::cout << "Aktuálny vrchol: " << aktualnaVetva->data_->octet << " [Stupeò: " << indexVetvy << "]" " IP: " << oktet1 << "->" << oktet2 << "->" << oktet3 << "->" << oktet4 << "->" << prefix << std::endl;
 			for (int i = 0; i < aktualnaVetva->sons_->size(); ++i)
 			{
-				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_.octet << std::endl;
+				std::cout << "[" << i << "]" << aktualnaVetva->sons_->access(i)->data_->data_->octet << std::endl;
 			}
 			std::cout << std::endl;
 			break;
@@ -331,19 +294,19 @@ void Program::runStage2()
 				switch (indexVetvy)
 				{
 				case 1:
-					oktet1 = aktualnaVetva->data_.octet;
+					oktet1 = aktualnaVetva->data_->octet;
 					break;
 				case 2:
-					oktet2 = aktualnaVetva->data_.octet;
+					oktet2 = aktualnaVetva->data_->octet;
 					break;
 				case 3:
-					oktet3 = aktualnaVetva->data_.octet;
+					oktet3 = aktualnaVetva->data_->octet;
 					break;
 				case 4:
-					oktet4 = aktualnaVetva->data_.octet;
+					oktet4 = aktualnaVetva->data_->octet;
 					break;
 				case 5:
-					prefix = aktualnaVetva->data_.octet;
+					prefix = aktualnaVetva->data_->octet;
 					break;
 				}
 			}
@@ -354,7 +317,7 @@ void Program::runStage2()
 			Route init;
 			Route& route = init;
 
-			bool zobrazujZaznamy = true;
+			//bool zobrazujZaznamy = true;
 
 			std::string vyberMetody;
 			std::string predikat;
@@ -373,40 +336,37 @@ void Program::runStage2()
 			std::cin >> predikat;
 			std::cout << std::endl;
 
-			ds::amt::ImplicitSequence<Route> platneZaznamy;
-			ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator begin(&this->hierarchia, aktualnaVetva);
+			ds::amt::ImplicitSequence<Route*> platneZaznamy;
+			ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator begin(&this->hierarchia, aktualnaVetva);
 			switch (stoi(vyberMetody))
 			{
 			case 1:
-				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Octet, std::string>::filter(begin, hierarchia.end(),
-					[&predikat, &route](Octet prehladavane)->bool
+				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia.end(),
+					[&predikat, &route](Octet* prehladavane)->bool
 					{
-						return prehladavane.referenceToRoute != nullptr ?
-							Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Route, std::string>::matchWithAddress(*prehladavane.referenceToRoute, predikat) : false;
+						return prehladavane->referenceToRoute != nullptr ?
+							Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Route*, std::string>::matchWithAddress(prehladavane->referenceToRoute, predikat) : false;
 					},
-					[&platneZaznamy](Octet zaznam)->void
+					[&platneZaznamy](Octet* zaznam)->void
 					{
-						platneZaznamy.insertLast().data_ = *zaznam.referenceToRoute;
+						platneZaznamy.insertLast().data_ = zaznam->referenceToRoute;
 					}
 				);
 				break;
 			case 2:
-				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Octet, std::string>::filter(begin, hierarchia.end(),
-					[&predikat, &route](Octet prehladavane)->bool
+				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia.end(),
+					[&predikat, &route](Octet* prehladavane)->bool
 					{
-						return prehladavane.referenceToRoute != nullptr ?
-							Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Route, std::string>::matchLifetime(*prehladavane.referenceToRoute, predikat) : false;
+						return prehladavane->referenceToRoute != nullptr ?
+							Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet>::PreOrderHierarchyIterator, Route*, std::string>::matchLifetime(prehladavane->referenceToRoute, predikat) : false;
 					},
-					[&platneZaznamy](Octet zaznam)->void
+					[&platneZaznamy](Octet* zaznam)->void
 					{
-						platneZaznamy.insertLast().data_ = *zaznam.referenceToRoute;
+						platneZaznamy.insertLast().data_ = zaznam->referenceToRoute;
 					}
 				);
 				break;
 			}
-
-			while (zobrazujZaznamy)
-			{
 				if (platneZaznamy.size() == 0 && (vyberMetody == "1" || vyberMetody == "2"))
 				{
 					std::cout << "Neboli nájdené žiadne zhody" << std::endl;
@@ -415,35 +375,16 @@ void Program::runStage2()
 				{
 					for (auto& udaj : platneZaznamy)
 					{
-						udaj.toString();
+						udaj->toString();
 					}
 
-					this->stage_4(zobrazujZaznamy, platneZaznamy);
+					this->stage_4(platneZaznamy);
+					platneZaznamy.clear();
 				}
-				/*std::cout << "Chcete pokraèova v zobrazení záznamov? [A/N]" << std::endl;
-				std::string pokracovat;
-				std::cin >> pokracovat;
-
-				if (pokracovat._Equal("N") || pokracovat._Equal("n"))
-				{
-					UkonciZobrazenieZaznamov = true;
-				}
-
-				}*/
-
-			}
 			break;
 		}
 		case 4:
 		{
-			this->hierarchia.clear();
-
-			for (auto& route : rZoznam)
-			{
-				delete route;
-			}
-
-			rZoznam.clear();
 			runStage2Program = false;
 			this->run();
 			break;
@@ -455,19 +396,7 @@ void Program::runStage2()
 
 void Program::runStage3()
 {
-	/*auto hashFunction = [](const std::string& key)
-		{
-			static size_t randomizer = 0;
-			size_t hash = 0;
-			for (char ch : key) {
-				hash = hash * 2 + ch;
-			}
-			hash += randomizer;
-			randomizer += 5;
-			return hash;
-		};*/
-
-	ds::adt::HashTable<std::string, Route> hashTable([](const std::string& kluc)
+	ds::adt::HashTable<std::string, Route*> hashTable([](const std::string& kluc)
 		{
 			static size_t randomizer = 0;
 			size_t hash = 0;
@@ -504,7 +433,7 @@ void Program::runStage3()
 				if ((*iterator).key_ == key)
 				{
 					std::cout << (*iterator).key_ << " -> ";
-					(*iterator).data_.toString();
+					(*iterator).data_->toString();
 				}
 			}
 			break;
@@ -521,17 +450,18 @@ void Program::runStage3()
 	}
 }
 
-void Program::stage_4(bool& zobrazujZaznamy, ds::amt::ImplicitSequence<Route> sekvencia) const
+void Program::stage_4(ds::amt::ImplicitSequence<Route*> sekvencia) const
 {
 	if (this->runProgram)
 	{
 		std::string sortovat;
 		std::cout << "Chcete zoradi záznamy? [A/N]" << std::endl;
 		std::cin >> sortovat;
+		bool sortuj = false;
 		std::string vyberSortovania;
 		if (sortovat._Equal("A") || sortovat._Equal("a"))
 		{
-
+			sortuj = true;
 			std::cout << "1. comparePrefix (IP adresa v prefixe prvého záznamu je nižšia ako IP adresa v prefixe druhého záznamu)" << std::endl;
 			std::cout << "2. compareTime (Èas prítomnosti prvého záznamu je nižší ako èas prítomnosti druhého záznamu)" << std::endl;
 			std::cout << "Vyberte si spôsob zoradenia: ";
@@ -539,53 +469,34 @@ void Program::stage_4(bool& zobrazujZaznamy, ds::amt::ImplicitSequence<Route> se
 		}
 		else if (sortovat._Equal("N") || sortovat._Equal("n"))
 		{
-			zobrazujZaznamy = false;
+			sortuj = false;
 
 		}
 
-		if (zobrazujZaznamy)
+		if (sortuj)
 		{
 			switch (std::stoi(vyberSortovania))
 			{
 			case 1:
-				SortingAlgorithm::comparePrefix(&sekvencia, [](Route prvyKontrolovany, Route druhyKontrolovany)->bool
-					{
-						//IP adresa v prefixe prvého záznamu je nižšia ako IP adresa v prefixe druhého záznamu.Ak sú IP adresy v prefixoch rovnaké, tak sa porovná, èi je maska v prefixe prvého záznamu menšia ako maska v prefixe druhého záznamu.
-						uint32_t ipPrva = SortingAlgorithm().ipToInteger(prvyKontrolovany.getIpAdress());
-						uint32_t ipDruha = SortingAlgorithm().ipToInteger(druhyKontrolovany.getIpAdress());
-						if (ipPrva < ipDruha) {
-							return true;  // IP adresa prvého prefixu je menšia
-						}
-						else if (ipPrva == ipDruha) {
-							return prvyKontrolovany.getPrefix() < druhyKontrolovany.getPrefix();  // Ak sú IP adresy rovnaké, porovnáme masky
-						}
-						return false;
-
-						return ipPrva < ipDruha ? true : prvyKontrolovany.getPrefix() < druhyKontrolovany.getPrefix();
-					});
+				SortingAlgorithm::comparePrefix(&sekvencia);
 				break;
 			case 2:
-				SortingAlgorithm::compareTime(&sekvencia, [](Route prvyKontrolovany, Route druhyKontrolovany)->bool
-					{
-						//Èas prítomnosti prvého záznamu je nižší ako èas prítomnosti druhého záznamu.
-
-						return prvyKontrolovany.getLifeTimeSecondsInt() != druhyKontrolovany.getLifeTimeSecondsInt() ? prvyKontrolovany.getLifeTimeSecondsInt() < druhyKontrolovany.getLifeTimeSecondsInt() : false;
-					});
+				SortingAlgorithm::compareTime(&sekvencia);
 				break;
 			}
-			//bool vysledky = true;
+			bool vysledky = true;
 			std::string koniecZobrazenia;
-			while (zobrazujZaznamy)
+			while (vysledky)
 			{
 				for (auto& udaj : sekvencia)
 				{
-					udaj.toString();
+					udaj->toString();
 				}
 				std::cout << "Chcete pokraèova v zobrazení záznamov? [A/N]" << std::endl;
 				std::cin >> koniecZobrazenia;
 				if (koniecZobrazenia._Equal("N") || koniecZobrazenia._Equal("n"))
 				{
-					zobrazujZaznamy = false;
+					vysledky = false;
 				}
 			}
 		}
@@ -594,6 +505,25 @@ void Program::stage_4(bool& zobrazujZaznamy, ds::amt::ImplicitSequence<Route> se
 
 Program::~Program()
 {
-	zoznam.clear();
-	hierarchia.clear();
+	//vymazanie sekvencie
+	for (auto& route : this->zoznam)
+	{
+		delete route;
+	}
+	this->zoznam.clear();
+
+	//vymazanie hierarchie
+	for(auto& octet : this->hierarchia)
+	{
+		octet->referenceToRoute = nullptr;
+		delete octet;
+	}
+	this->hierarchia.clear();
+
+	//vymazanie sekvencie pre hierarchiu
+	for (auto& route : this->hierarchySequence)
+	{
+		delete route;
+	}
+	this->hierarchySequence.clear();
 }

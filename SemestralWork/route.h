@@ -32,6 +32,10 @@ public:
 	Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time);
 	bool operator==(const Route& other) const { return ipAdress == other.ipAdress && mask == other.mask && nextHopIpAdress == other.nextHopIpAdress && time == other.time; }
 	bool operator!=(const Route& other) const { return !(*this == other); }
+	Route(const Route& other) : ipAdress(other.ipAdress), mask(other.mask), nextHopIpAdress(other.nextHopIpAdress), time(other.time) {
+		setIpAdressOctets(other.ipAdress);
+		setLifeTimeToSeconds(other.time);
+	}
 	~Route();
 public:
 	bool isPartOfSubnet(std::string ipAdress) const;

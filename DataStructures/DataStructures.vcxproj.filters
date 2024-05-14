@@ -199,4 +199,7 @@
   <ItemGroup>
     <Natvis Include="ds.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
 </Project>

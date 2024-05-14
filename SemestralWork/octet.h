@@ -9,6 +9,7 @@ struct Octet
 
 	Octet() = default;
 	Octet(std::string octet, Route* referenceToRoute = nullptr) : octet(octet), referenceToRoute(referenceToRoute) {}
+	~Octet() { if (referenceToRoute != nullptr) { delete referenceToRoute; } }
 	bool operator==(const Octet& other) const
 	{
 		return octet == other.octet && referenceToRoute == other.referenceToRoute;
