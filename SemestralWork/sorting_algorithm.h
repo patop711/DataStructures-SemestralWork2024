@@ -34,12 +34,13 @@ public:
 			{
 				//Èas prítomnosti prvého záznamu je nižší ako èas prítomnosti druhého záznamu.
 
-				return prvyKontrolovany->getLifeTimeSecondsInt() != druhyKontrolovany->getLifeTimeSecondsInt() ? prvyKontrolovany->getLifeTimeSecondsInt() < druhyKontrolovany->getLifeTimeSecondsInt() : false;
+				return prvyKontrolovany->getLifeTimeSecondsInt() < druhyKontrolovany->getLifeTimeSecondsInt() ? true : false;
 			});
 	}
 private:
 	static uint32_t ipToInteger(const std::string& ip)
 	{
+		//Metóda konvertuje 4-oktetovú IP adresu na 32-bitové èíslo
 		std::vector<uint8_t> bytes;
 		std::stringstream ss(ip);
 		std::string byte;
@@ -48,8 +49,8 @@ private:
 			bytes.push_back(static_cast<uint8_t>(std::stoi(byte)));
 		}
 
-		// Konvertuje 4-oktetovú IP adresu na 32-bitové èíslo
 		uint32_t integerIp = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+
 		return integerIp;
 	}
 };

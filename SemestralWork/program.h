@@ -18,9 +18,9 @@ private:
 	bool runProgram = true;
 	bool hierarchyLoaded = false;
 	std::string menoSuboru;
-	ds::amt::ImplicitSequence<Route*> zoznam;
-	ds::amt::ImplicitSequence<Route*> hierarchySequence;
-	ds::amt::MultiWayExplicitHierarchy<Octet*> hierarchia;
+	ds::amt::ImplicitSequence<Route*>* zoznam;
+	ds::amt::ImplicitSequence<Route*>* hierarchySequence;
+	ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia;
 	Octet* koren = nullptr;
 
 public:
@@ -29,13 +29,18 @@ public:
 	void runStage1();
 	void runStage2();
 	void runStage3();
-	void stage_4(ds::amt::ImplicitSequence<Route*> sekvencia) const;
 	//void runStage5Bonus();<-- TODO
 	~Program();
+private:
+	void stage_4(ds::amt::ImplicitSequence<Route*> sekvencia) const;
+	void destroy();
 };
 
 Program::Program()
 {
+	this->zoznam = new ds::amt::ImplicitSequence<Route*>(); //<-- sekvencia
+	this->hierarchia = new ds::amt::MultiWayExplicitHierarchy<Octet*>(); //<-- hierarchia
+	this->hierarchySequence = new ds::amt::ImplicitSequence<Route*>(); //<-- sekvencia pre hierarchiu
 	std::cout << "Zadajte nazov CSV suboru s routovacou tabulkou: ";
 	std::cin >> this->menoSuboru;
 	RoutingTable().readTableForSequence(this->menoSuboru, this->zoznam);
@@ -77,8 +82,8 @@ void Program::run()
 			system("cls");
 			std::cout << "Zadajte nazov CSV suboru s routovacou tabulkou: ";
 			std::cin >> this->menoSuboru;
-			this->zoznam.clear();
-			this->hierarchia.clear();
+			this->destroy();
+			this->hierarchyLoaded = false;
 			this->run();
 			break;
 		case 5:
@@ -97,7 +102,7 @@ void Program::run()
 void Program::runStage1()
 {
 	//this->zoznam.clear();
-	if (this->zoznam.isEmpty())
+	if (this->zoznam->isEmpty())
 	{
 		RoutingTable().readTableForSequence(this->menoSuboru, this->zoznam);
 	}
@@ -123,7 +128,7 @@ void Program::runStage1()
 			std::cout << "Zadajte IP adresu v tvare 0-255.0-255.0-255.0-255: ";
 			std::cin >> ip;
 
-			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam.begin(), zoznam.end(),
+			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam->begin(), zoznam->end(),
 				[&ip](auto zdroj) -> bool {
 					return Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::matchWithAddress(zdroj, ip);
 				},
@@ -142,7 +147,7 @@ void Program::runStage1()
 			std::cin >> lifetime;
 			system("cls");
 
-			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam.begin(), zoznam.end(),
+			Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::filter(zoznam->begin(), zoznam->end(),
 				[&lifetime](auto zdroj) -> bool {
 					return Algorithms<ds::amt::ImplicitSequence<Route*>::IteratorType, Route*, std::string>::matchLifetime(zdroj, lifetime);
 				},
@@ -199,11 +204,11 @@ void Program::runStage2()
 	{
 		this->hierarchyLoaded = true;
 		this->koren = new Octet("RT KOREÒ"); // <-- REPREZENTUJE KOREÒ HIERARCHIE
-		this->hierarchia.emplaceRoot().data_ = koren;
-		RoutingTable().readTableForHierarchy(this->menoSuboru, &this->hierarchia, this->hierarchySequence);
+		this->hierarchia->emplaceRoot().data_ = koren;
+		RoutingTable().readTableForHierarchy(this->menoSuboru, this->hierarchia, this->hierarchySequence);
 	}
 
-	ds::amt::MultiWayExplicitHierarchyBlock<Octet*>* aktualnaVetva = this->hierarchia.accessRoot();
+	ds::amt::MultiWayExplicitHierarchyBlock<Octet*>* aktualnaVetva = this->hierarchia->accessRoot();
 	std::string inputOperation;
 	while (runStage2Program)
 	{
@@ -276,7 +281,7 @@ void Program::runStage2()
 		{
 			if (aktualnaVetva->parent_ != nullptr)
 			{
-				aktualnaVetva = this->hierarchia.accessParent(*aktualnaVetva);
+				aktualnaVetva = this->hierarchia->accessParent(*aktualnaVetva);
 				indexVetvy--;
 			}
 			break;
@@ -289,7 +294,7 @@ void Program::runStage2()
 				std::string index;
 				std::cin >> index;
 				int indexSyna = std::stoi(index);
-				aktualnaVetva = hierarchia.accessSon(*aktualnaVetva, indexSyna);
+				aktualnaVetva = hierarchia->accessSon(*aktualnaVetva, indexSyna);
 				indexVetvy++;
 				switch (indexVetvy)
 				{
@@ -337,11 +342,11 @@ void Program::runStage2()
 			std::cout << std::endl;
 
 			ds::amt::ImplicitSequence<Route*> platneZaznamy;
-			ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator begin(&this->hierarchia, aktualnaVetva);
+			ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator begin(this->hierarchia, aktualnaVetva);
 			switch (stoi(vyberMetody))
 			{
 			case 1:
-				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia.end(),
+				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia->end(),
 					[&predikat, &route](Octet* prehladavane)->bool
 					{
 						return prehladavane->referenceToRoute != nullptr ?
@@ -354,7 +359,7 @@ void Program::runStage2()
 				);
 				break;
 			case 2:
-				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia.end(),
+				Algorithms<ds::amt::MultiWayExplicitHierarchy<Octet*>::PreOrderHierarchyIterator, Octet*, std::string>::filter(begin, hierarchia->end(),
 					[&predikat, &route](Octet* prehladavane)->bool
 					{
 						return prehladavane->referenceToRoute != nullptr ?
@@ -407,7 +412,7 @@ void Program::runStage3()
 			randomizer += 5;
 			//std::cout << "Hash: " << hash << std::endl;
 			return hash;
-		}, this->zoznam.size());
+		}, this->zoznam->size());
 
 	RoutingTable().loadDataToTable(&hashTable, this->zoznam);
 
@@ -503,27 +508,36 @@ void Program::stage_4(ds::amt::ImplicitSequence<Route*> sekvencia) const
 	}
 }
 
-Program::~Program()
+void Program::destroy()
 {
 	//vymazanie sekvencie
-	for (auto& route : this->zoznam)
+	for (auto& route : *(this->zoznam))
 	{
 		delete route;
 	}
-	this->zoznam.clear();
+	this->zoznam->clear();
 
 	//vymazanie hierarchie
-	for(auto& octet : this->hierarchia)
+	for (auto& octet : *(this->hierarchia))
 	{
 		octet->referenceToRoute = nullptr;
 		delete octet;
 	}
-	this->hierarchia.clear();
+	this->hierarchia->clear();
 
 	//vymazanie sekvencie pre hierarchiu
-	for (auto& route : this->hierarchySequence)
+	for (auto& route : *(this->hierarchySequence))
 	{
 		delete route;
 	}
-	this->hierarchySequence.clear();
+	this->hierarchySequence->clear();
+}
+
+Program::~Program()
+{
+	this->destroy();
+
+	delete this->hierarchia;
+	delete this->zoznam;
+	delete this->hierarchySequence;
 }

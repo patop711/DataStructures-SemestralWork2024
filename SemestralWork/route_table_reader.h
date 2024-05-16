@@ -16,16 +16,16 @@ class RoutingTable
 public:
 	RoutingTable();
 	~RoutingTable();
-	void readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>& sekvencia);
-	void readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>& sekvencia);
-	void loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*> routes);
+	void readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>* sekvencia);
+	void readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>* sekvencia);
+	void loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes);
 };
 
 RoutingTable::RoutingTable()
 {
 }
 
-void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>& sekvencia)
+void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>* sekvencia)
 {
 	std::ifstream csv(menoSuboru);
 	std::string line;
@@ -54,7 +54,7 @@ void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::Implici
 				nextHopIpAdress = tokens[3].substr(tokens[3].find(" ") + 1);
 				time = tokens[4];
 
-				sekvencia.insertLast().data_ = new Route(ipAdress, mask, nextHopIpAdress, time);
+				sekvencia->insertLast().data_ = new Route(ipAdress, mask, nextHopIpAdress, time);
 				tokens.clear();
 				ss.clear();
 			}
@@ -67,7 +67,7 @@ void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::Implici
 	csv.close();
 }
 
-void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>& sekvencia)
+void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>* sekvencia)
 {
 	std::ifstream csv(menoSuboru);
 	std::string line = "";
@@ -123,7 +123,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 				prefix = "/" + mask;
 
 				Route* route = new Route(ipAdress, mask, nextHopIpAdress, time);
-				sekvencia.insertLast().data_ = route;
+				sekvencia->insertLast().data_ = route;
 				tokens.clear();
 				ss.clear();
 
@@ -341,7 +341,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 					indexOfPrefixOktet5 = 0; //<-- index prefixu sú nastavený na nulu
 
 					blockOktet5 = &hierarchia->emplaceSon(*blockOktet4, indexOfPrefixOktet5); //<-- vytvorenie prefixu ako potomka od oktetu 4
-					blockOktet5->data_ = new Octet(prefix, sekvencia.accessLast()->data_); //<-- priradenie dát do prefixu
+					blockOktet5->data_ = new Octet(prefix, sekvencia->accessLast()->data_); //<-- priradenie dát do prefixu
 					indexOfPrefixOktet5++; //<-- inkrementacia indexu prefixu o +1
 
 					blockOktet5 = hierarchia->accessSon(*blockOktet4, indexOfPrefixOktet5 - 1); //<-- nastavenie blockOktet5 na prefix ktorý sme práve vytvorili
@@ -360,7 +360,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 					{
 						indexOfPrefixOktet5 = velkostBlokuOktet4; //<-- index prefixu sa nastaví na veľkosť bloku prefixov (ak je nula tak sa nastaví na 0)
 						blockOktet5 = &hierarchia->emplaceSon(*blockOktet4, indexOfPrefixOktet5); //<-- vytvoríme nový prefix ako syna od oktetu 4 a dam mu index
-						blockOktet5->data_ = new Octet(prefix, sekvencia.accessLast()->data_); //<-- priradíme dáta do prefixu
+						blockOktet5->data_ = new Octet(prefix, sekvencia->accessLast()->data_); //<-- priradíme dáta do prefixu
 						indexOfPrefixOktet5++; //<-- inkrementujeme index prefixu o +1
 
 						blockOktet5 = hierarchia->accessSon(*blockOktet4, indexOfPrefixOktet5 - 1); //<-- nastavíme blockOktet5 na prefix ktorý sme práve vytvorili
@@ -377,10 +377,10 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 	csv.close();
 }
 
-void RoutingTable::loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*> routes)
+void RoutingTable::loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes)
 {
-	auto it = routes.begin();
-	auto end = routes.end();
+	auto it = routes->begin();
+	auto end = routes->end();
 
 	while (it != end)
 	{

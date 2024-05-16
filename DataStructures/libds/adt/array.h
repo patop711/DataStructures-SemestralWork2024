@@ -155,12 +155,12 @@ namespace ds::adt {
     ADT& Array<T>::assign(const ADT& other)
     {
         const Array<T>& otherArray = dynamic_cast<const Array<T>&>(other);
-		if (base_ != otherArray.base_ || this->size() != otherArray.size())
-		{
-			throw std::logic_error("Array bases are different!");
-		}
-		ADS<T>::assign(otherArray);
-		return *this;
+        if (base_ != otherArray.base_ || this->size() != otherArray.size())
+        {
+            throw std::logic_error("Array dimensions are different!");
+        }
+        ADS<T>::assign(other);
+        return *this;
     }
 
     template<typename T>
@@ -199,10 +199,10 @@ namespace ds::adt {
     template<typename T>
     T Array<T>::access(long long index) const
     {
-        if(!this->validateIndex(index))
-		{
-			throw std::out_of_range("Invalid index!");
-		}
+        if (!this->validateIndex(index))
+        {
+            throw std::out_of_range("Invalid index!");
+        }
         return this->getSequence()->access(this->mapIndex(index))->data_;
     }
 
@@ -213,7 +213,8 @@ namespace ds::adt {
         {
             throw std::out_of_range("Invalid index!");
         }
-        this->getSequence()->set(element, this->mapIndex(index));
+
+        this->getSequence()->access(this->mapIndex(index))->data_ = element;
     }
 
     template <typename T>
@@ -256,7 +257,7 @@ namespace ds::adt {
 
     template<typename T>
     CompactMatrix<T>::CompactMatrix(Dimension dimension1, Dimension dimension2) :
-        ADS<T>(new amt::IS<T>(dimension1.getSize() * dimension2.getSize(), true)),
+        ADS<T>(new amt::IS<T>(dimension1.getSize()* dimension2.getSize(), true)),
         dimension1_(dimension1),
         dimension2_(dimension2)
     {
@@ -325,10 +326,10 @@ namespace ds::adt {
     template<typename T>
     T CompactMatrix<T>::access(long long index1, long long index2) const
     {
-        if(!this->validateIndices(index1, index2))
-		{
-			throw std::out_of_range("Invalid indices!");
-		}
+        if (!this->validateIndices(index1, index2))
+        {
+            throw std::out_of_range("Invalid index!");
+        }
         size_t mappedIndex = this->mapIndices(index1, index2);
         return this->getSequence()->access(mappedIndex)->data_;
     }
@@ -337,19 +338,19 @@ namespace ds::adt {
     void CompactMatrix<T>::set(T element, long long index1, long long index2)
     {
         if (!this->validateIndices(index1, index2))
-		{
-			throw std::out_of_range("Invalid indices!");
-		}
-		size_t mappedIndex = this->mapIndices(index1, index2);
-		this->getSequence()->set(element, mappedIndex).data_ = element;
+        {
+            throw std::out_of_range("Invalid index!");
+        }
+        size_t mappedIndex = this->mapIndices(index1, index2);
+        this->getSequence()->access(mappedIndex)->data_ = element;
     }
 
     template<typename T>
     bool CompactMatrix<T>::validateIndices(long long index1, long long index2) const
     {
-        return index1 >= dimension1_.getBase() && 
+        return index1 >= dimension1_.getBase() &&
             index1 < dimension1_.getBase() + static_cast<long long>(dimension1_.getSize()) &&
-			index2 >= dimension2_.getBase() && 
+            index2 >= dimension2_.getBase() &&
             index2 < dimension2_.getBase() + static_cast<long long>(dimension2_.getSize());
     }
 

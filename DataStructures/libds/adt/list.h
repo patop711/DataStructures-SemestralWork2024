@@ -134,21 +134,21 @@ namespace ds::adt {
     template<typename T, typename SequenceType>
     size_t GeneralList<T, SequenceType>::calculateIndex(T element)
     {
-        size_t vysledok = 0;
-        typename SequenceType::BlockType* block = this->getSequence()->
-            findBlockWithProperty([&](typename SequenceType::BlockType*) 
+        size_t result = 0;
+        typename SequenceType::BlockType* block = this->getSequence()->findBlockWithProperty(
+            [&](typename SequenceType::BlockType* b)
             {
-                    if(b->data == element)
-					{
-						return true;
-					}
-                    else
-                    {
-                        vysledok++;
-                        return false;
-                    }
-		});
-        return block != nullptr ? vysledok : INVALID_INDEX;
+                if (b->data_ == element)
+                {
+                    return true;
+                }
+                else
+                {
+                    result++;
+                    return false;
+                }
+            });
+        return block != nullptr ? result : INVALID_INDEX;
     }
 
     template<typename T, typename SequenceType>
@@ -161,8 +161,13 @@ namespace ds::adt {
     T GeneralList<T, SequenceType>::accessFirst()
     {
         typename SequenceType::BlockType* block = this->getSequence()->accessFirst();
-        
-        return block == nullptr ? throw std::out_of_range("Zoznam je prazdny!") : block->data_;
+
+        if (block == nullptr)
+        {
+            throw std::out_of_range("List is empty!");
+        }
+
+        return block->data_;
     }
 
     template<typename T, typename SequenceType>
@@ -170,7 +175,12 @@ namespace ds::adt {
     {
         typename SequenceType::BlockType* block = this->getSequence()->accessLast();
 
-        return block == nullptr ? throw std::out_of_range("Zoznam je prazdny!") : block->data_;
+        if (block == nullptr)
+        {
+            throw std::out_of_range("List is empty!");
+        }
+
+        return block->data_;
     }
 
     template<typename T, typename SequenceType>
@@ -178,7 +188,12 @@ namespace ds::adt {
     {
         typename SequenceType::BlockType* block = this->getSequence()->access(index);
 
-        return block == nullptr ? throw std::out_of_range("Neznámy index!") : block->data_;
+        if (block == nullptr)
+        {
+            throw std::out_of_range("Invalid index!");
+        }
+
+        return block->data_;
     }
 
     template<typename T, typename SequenceType>
@@ -196,10 +211,11 @@ namespace ds::adt {
     template<typename T, typename SequenceType>
     void GeneralList<T, SequenceType>::insert(T element, size_t index)
     {
-        if(index > this->size())
+        if (index > this->size())
         {
-			throw std::out_of_range("Neznámy index!");
-		}
+            throw std::out_of_range("Invalid index!");
+        }
+
         this->getSequence()->insert(index).data_ = element;
     }
 
@@ -207,15 +223,13 @@ namespace ds::adt {
     void GeneralList<T, SequenceType>::set(size_t index, T element)
     {
         typename SequenceType::BlockType* block = this->getSequence()->access(index);
+
         if (block == nullptr)
         {
-            throw std::out_of_range("Neznámy index!");
+            throw std::out_of_range("Invalid index!");
         }
-        /*if (index < 0 || index >= this->size())
-        {
-			throw std::out_of_range("Neznámy index!");
-		}*/
-		this->getSequence().access(index).data_ = element;
+
+        block->data_ = element;
     }
 
     template<typename T, typename SequenceType>
@@ -223,7 +237,7 @@ namespace ds::adt {
     {
         if (this->isEmpty())
         {
-            throw std::out_of_range("Zoznam je prazdny!");
+            throw std::out_of_range("List is empty!");
         }
         this->getSequence()->removeFirst();
     }
@@ -232,10 +246,10 @@ namespace ds::adt {
     void GeneralList<T, SequenceType>::removeLast()
     {
         if (this->isEmpty())
-		{
-			throw std::out_of_range("Zoznam je prazdny!");
-		}
-		this->getSequence()->removeLast();
+        {
+            throw std::out_of_range("List is empty!");
+        }
+        this->getSequence()->removeLast();
     }
 
     template<typename T, typename SequenceType>
@@ -243,7 +257,7 @@ namespace ds::adt {
     {
         if (index >= this->size())
         {
-            throw std::out_of_range("Neznámy index!");
+            throw std::out_of_range("Invalid index!");
         }
         this->getSequence()->remove(index);
     }

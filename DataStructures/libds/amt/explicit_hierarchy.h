@@ -167,6 +167,9 @@ namespace ds::amt {
         bool isLeftSon(const BlockType& node) const;
         bool isRightSon(const BlockType& node) const;
 
+        bool isRoot(const BlockType& node) const; //<-- modifikovane mnou
+        bool isLeaf(const BlockType& node) const; //<-- modifikovane mnou
+
         bool hasLeftSon(const BlockType& node) const;
         bool hasRightSon(const BlockType& node) const;
 
@@ -586,6 +589,21 @@ namespace ds::amt {
     bool BinaryExplicitHierarchy<DataType>::isRightSon(const BlockType& node) const
     {
         return node.parent_ != nullptr && this->accessRightSon(*this->accessParent(node)) == &node;
+    }
+
+    //Moja metoda
+    template<typename DataType>
+    bool BinaryExplicitHierarchy<DataType>::isRoot(const BlockType& node) const
+	{
+		return node.parent_ == nullptr;
+	}
+    //Moja metoda
+
+    //Moja metoda
+    template<typename DataType>
+    bool BinaryExplicitHierarchy<DataType>::isLeaf(const BlockType& node) const
+    {
+        return node.left_ == nullptr && node.right_ == nullptr;
     }
 
     template <typename DataType>

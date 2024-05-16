@@ -10,10 +10,13 @@
 class Route
 {
 private:
+	//POTREBNE DATA
 	std::string ipAdress = "";
 	std::string mask = "";
 	std::string nextHopIpAdress = "";
 	std::string time = "";
+	//POTREBNE DATA
+
 	long long lifeTimeSeconds = 0;
 
 	std::string octet_1 = "";
@@ -26,6 +29,7 @@ private:
 	std::bitset<8> ipAdressOctet2 = 0;
 	std::bitset<8> ipAdressOctet3 = 0;
 	std::bitset<8> ipAdressOctet4 = 0;
+	//Oktety ip adresy
 
 public:
 	Route();

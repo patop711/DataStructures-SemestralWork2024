@@ -154,7 +154,7 @@ namespace ds::adt {
 		{
 			return true;
 		}
-        if (this->size() != otherImplicitQueue->size_())
+        if (this->size() != otherImplicitQueue->size())
         {
             return false;
         }
@@ -183,7 +183,7 @@ namespace ds::adt {
             throw std::out_of_range("Kapacita frontu je naplnená!");
         }
         this->getSequence()->access(insertionIndex_)->data_ = element;
-        this.insertionIndex_ = this->getSequence()->indexOfNext(insertionIndex_);
+        this->insertionIndex_ = this->getSequence()->indexOfNext(insertionIndex_);
         ++this->size_;
     }
 
