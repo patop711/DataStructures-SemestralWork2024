@@ -1,7 +1,11 @@
 #pragma once
 #include <string>
 #include "route.h"
-
+/*
+* 
+* Trieda Octet sluzi na reprezentaciu jedneho oktetu IP adresy a referenciu na trasu v poslednom oktete ktorý je prefix v hierarchii
+* 
+*/
 struct Octet
 {
 	std::string octet;

@@ -9,7 +9,7 @@
 #include "octet.h"
 
 /*
-* Trieda ktorá spracúvava dáta zo súboru a poskytuje operacie
+* Trieda ktorá spracúvava dáta zo súboru a poskytuje operacie na prácu s nimi
 */
 class RoutingTable
 {
@@ -18,13 +18,19 @@ public:
 	~RoutingTable();
 	void readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>* sekvencia);
 	void readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>* sekvencia);
-	void loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes);
+	void loadDataToTable(ds::adt::ModifiedHashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes);
 };
 
+/*
+* Konštruktor triedy
+*/
 RoutingTable::RoutingTable()
 {
 }
 
+/*
+* Metóda na načítanie dát zo súboru do sekvencie
+*/
 void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::ImplicitSequence<Route*>* sekvencia)
 {
 	std::ifstream csv(menoSuboru);
@@ -67,6 +73,9 @@ void RoutingTable::readTableForSequence(std::string menoSuboru, ds::amt::Implici
 	csv.close();
 }
 
+/*
+* Funkcia na načítanie dát zo súboru do hierarchie
+*/
 void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiWayExplicitHierarchy<Octet*>* hierarchia, ds::amt::ImplicitSequence<Route*>* sekvencia)
 {
 	std::ifstream csv(menoSuboru);
@@ -176,7 +185,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 						/*
 						* Tu sa kontroluje ci sa v hierarchii náhodou nenachádza už oktet 1 s rovnakou hodnotou
 						*/
-						if (hierarchia->accessSon(*hierarchia->accessRoot(), j)->data_->octet._Equal(oktet1)) //<-- ak sa v hierarchii nachádza oktet 1 s rovnakou hodnotou ako je oktet 1 z IS
+						if (hierarchia->accessSon(*hierarchia->accessRoot(), j)->data_->octet == oktet1) //<-- ak sa v hierarchii nachádza oktet 1 s rovnakou hodnotou ako je oktet 1 z IS
 						{
 							blockOktet1 = hierarchia->accessSon(*hierarchia->accessRoot(), j); //<-- nastavíme blockOktet1 na tento oktet 1
 							foundOktet1 = true; //<-- nastavíme foundOktet1 na true
@@ -224,7 +233,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 					for (size_t j = 0; j < velkostBlokuOktet1; j++) //<-- prejdeme for cyklom cez vsetky bloky oktetov 2 ktoré sa nachádzajú v oktete 1
 					{
 						//hierarchia->accessSon(*blockOktet1, j)->data_.octet == oktet2
-						if (blockOktet1->sons_->access(j)->data_->data_->octet._Equal(oktet2)) //<-- ak sa v oktete 1 nachádza oktet 2 s rovnakou hodnotou ako je oktet 2 z IS
+						if (blockOktet1->sons_->access(j)->data_->data_->octet == oktet2) //<-- ak sa v oktete 1 nachádza oktet 2 s rovnakou hodnotou ako je oktet 2 z IS
 						{
 							blockOktet2 = hierarchia->accessSon(*blockOktet1, j); //<-- nastavíme blockOktet2 na tento oktet 2
 							foundOktet2 = true; //<-- nastavíme foundOktet2 na true
@@ -270,7 +279,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 					for (size_t j = 0; j < velkostBlokuOktet2; j++) //<-- prejdeme for cyklom cez vsetky bloky oktetov 3 ktoré sa nachádzajú v oktete 2
 					{
 						//hierarchia->accessSon(*blockOktet1, j)->data_.octet == oktet2
-						if (blockOktet2->sons_->access(j)->data_->data_->octet._Equal(oktet3)) //<-- ak sa v oktete 2 nachádza oktet 3 s rovnakou hodnotou ako je oktet 3 z IS
+						if (blockOktet2->sons_->access(j)->data_->data_->octet == oktet3) //<-- ak sa v oktete 2 nachádza oktet 3 s rovnakou hodnotou ako je oktet 3 z IS
 						{
 							blockOktet3 = hierarchia->accessSon(*blockOktet2, j); //<-- nastavíme blockOktet3 na tento oktet 3
 							foundOktet3 = true; //<-- nastavíme foundOktet3 na true
@@ -312,7 +321,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 					for (size_t j = 0; j < velkostBlokuOktet3; j++) //<-- prejdeme for cyklom cez vsetky bloky oktetov 4 ktoré sa nachádzajú v oktete 3
 					{
 						//hierarchia->accessSon(*blockOktet1, j)->data_.octet == oktet2
-						if (blockOktet3->sons_->access(j)->data_->data_->octet._Equal(oktet4)) //<-- ak sa v oktete 3 nachádza oktet 4 s rovnakou hodnotou ako je oktet 4 z IS
+						if (blockOktet3->sons_->access(j)->data_->data_->octet == oktet4) //<-- ak sa v oktete 3 nachádza oktet 4 s rovnakou hodnotou ako je oktet 4 z IS
 						{
 							blockOktet4 = hierarchia->accessSon(*blockOktet3, j); //<-- nastavíme blockOktet4 na tento oktet 4
 							foundOktet4 = true; //<-- nastavíme foundOktet4 na true
@@ -350,7 +359,7 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 				{
 					for (size_t j = 0; j < velkostBlokuOktet4; j++) //<-- prejdeme for cyklom cez vsetky bloky prefixov ktoré sa nachádzajú v oktete 4
 					{
-						if (blockOktet4->sons_->access(j)->data_->data_->octet._Equal(prefix)) //<-- ak sa v oktete 4 nenachádza oktet(prefix) 4 s rovnakou hodnotou ako je oktet 4 z IS
+						if (blockOktet4->sons_->access(j)->data_->data_->octet == prefix) //<-- ak sa v oktete 4 nenachádza oktet(prefix) 4 s rovnakou hodnotou ako je oktet 4 z IS
 						{
 							foundPrefix = true; //<-- nastavíme foundPrefix na true
 						}
@@ -377,7 +386,10 @@ void RoutingTable::readTableForHierarchy(std::string menoSuboru, ds::amt::MultiW
 	csv.close();
 }
 
-void RoutingTable::loadDataToTable(ds::adt::HashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes)
+/*
+* Metóda ktorá načíta dáta do tabuľky
+*/
+void RoutingTable::loadDataToTable(ds::adt::ModifiedHashTable<std::string, Route*>* table, ds::amt::ImplicitSequence<Route*>* routes)
 {
 	auto it = routes->begin();
 	auto end = routes->end();
@@ -387,16 +399,11 @@ void RoutingTable::loadDataToTable(ds::adt::HashTable<std::string, Route*>* tabl
 		table->insert((*it)->getNextHopIpAdress(), *it);
 		++it;
 	}
-
-	//for (size_t i = 0; i < routes.size(); i++)
-	//{
-	//	//std::cout << routes.access(i)->data_.getIpAdress() << std::endl;
-	//	table->insert(routes.access(i)->data_.getNextHopIpAdress(), routes.access(i)->data_);
-	//}
-
-	std::cout << table->size() << std::endl;
 }
 
+/*
+* Destruktor triedy RoutingTable
+*/
 RoutingTable::~RoutingTable()
 {
 }

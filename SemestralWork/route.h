@@ -16,20 +16,7 @@ private:
 	std::string nextHopIpAdress = "";
 	std::string time = "";
 	//POTREBNE DATA
-
 	long long lifeTimeSeconds = 0;
-
-	std::string octet_1 = "";
-	std::string octet_2 = "";
-	std::string octet_3 = "";
-	std::string octet_4 = "";
-
-	//Oktety ip adresy
-	std::bitset<8> ipAdressOctet1 = 0;
-	std::bitset<8> ipAdressOctet2 = 0;
-	std::bitset<8> ipAdressOctet3 = 0;
-	std::bitset<8> ipAdressOctet4 = 0;
-	//Oktety ip adresy
 
 public:
 	Route();
@@ -37,24 +24,19 @@ public:
 	bool operator==(const Route& other) const { return ipAdress == other.ipAdress && mask == other.mask && nextHopIpAdress == other.nextHopIpAdress && time == other.time; }
 	bool operator!=(const Route& other) const { return !(*this == other); }
 	Route(const Route& other) : ipAdress(other.ipAdress), mask(other.mask), nextHopIpAdress(other.nextHopIpAdress), time(other.time) {
-		setIpAdressOctets(other.ipAdress);
 		setLifeTimeToSeconds(other.time);
 	}
 	~Route();
 public:
-	bool isPartOfSubnet(std::string ipAdress) const;
 	std::string getIpAdress() const;
 	std::string getMask() const;
 	std::string getNextHopIpAdress() const;
 	std::string getTime() const;
-	std::string getIpAdressOctets() const;
 	void toString() const;
 	size_t getLifeTimeSecondsInt() const;
-	std::string getLifeTimeSeconds() const;
 	size_t getPrefix() const;
 
 private:
-	void setIpAdressOctets(std::string ipAdress);
 	void setLifeTimeToSeconds(std::string time);
 };
 
@@ -62,56 +44,18 @@ Route::Route()
 {
 }
 
+/*
+* Konstruktor triedy Route
+*/
 Route::Route(std::string ipAdress, std::string mask, std::string nextHopIpAdress, std::string time) :
 	ipAdress(ipAdress), mask(mask), nextHopIpAdress(nextHopIpAdress), time(time)
 {
-	setIpAdressOctets(ipAdress);
 	setLifeTimeToSeconds(getTime());
 }
 
-void Route::setIpAdressOctets(std::string ipAdress)
-{
-	// Splitnutie ipAdress do 4 oktetov pomocou "." separatora
-	std::string octet1 = ipAdress.substr(0, ipAdress.find("."));
-	ipAdress.erase(0, ipAdress.find(".") + 1);
-	std::string octet2 = ipAdress.substr(0, ipAdress.find("."));
-	ipAdress.erase(0, ipAdress.find(".") + 1);
-	std::string octet3 = ipAdress.substr(0, ipAdress.find("."));
-	ipAdress.erase(0, ipAdress.find(".") + 1);
-	std::string octet4 = ipAdress;
-
-	// Konverzia oktetov na bitset
-	ipAdressOctet1 = std::bitset<8>(std::stoi(octet1));
-	ipAdressOctet2 = std::bitset<8>(std::stoi(octet2));
-	ipAdressOctet3 = std::bitset<8>(std::stoi(octet3));
-	ipAdressOctet4 = std::bitset<8>(std::stoi(octet4));
-}
-
-bool Route::isPartOfSubnet(std::string targetIP) const
-{
-	std::string octet1 = targetIP.substr(0, targetIP.find("."));
-	targetIP.erase(0, targetIP.find(".") + 1);
-	std::string octet2 = targetIP.substr(0, targetIP.find("."));
-	targetIP.erase(0, targetIP.find(".") + 1);
-	std::string octet3 = targetIP.substr(0, targetIP.find("."));
-	targetIP.erase(0, targetIP.find(".") + 1);
-	std::string octet4 = targetIP;
-
-	std::bitset<8> octet1b(std::stoi(octet1));
-	std::bitset<8> octet2b(std::stoi(octet2));
-	std::bitset<8> octet3b(std::stoi(octet3));
-	std::bitset<8> octet4b(std::stoi(octet4));
-
-	std::string targetIPBinary = octet1b.to_string() + octet2b.to_string() + octet3b.to_string() + octet4b.to_string();
-
-	for (size_t i = 0; i < getPrefix(); i++) {
-		if (targetIPBinary.at(i) != this->getIpAdressOctets().at(i)) {
-			return false;
-		}
-	}
-	return true;
-}
-
+/*
+* Nastavenie casu na sekundy
+*/
 void Route::setLifeTimeToSeconds(std::string time)
 {
 	if (time.length() == 2)
@@ -169,51 +113,65 @@ void Route::setLifeTimeToSeconds(std::string time)
 	}
 }
 
+/*
+* Vrati prefix
+*/
 size_t Route::getPrefix() const
 {
 	return std::stoi(mask);
 }
 
-std::string Route::getIpAdressOctets() const
-{
-	return ipAdressOctet1.to_string() + ipAdressOctet2.to_string() + ipAdressOctet3.to_string() + ipAdressOctet4.to_string();
-}
-
+/*
+* Vrati ip adresu
+*/
 std::string Route::getIpAdress() const
 {
 	return this->ipAdress;
 }
 
+/*
+* Vrati masku
+*/
 std::string Route::getMask() const
 {
 	return this->mask;
 }
 
+/*
+* Vrati next hop ip adresu
+*/
 std::string Route::getNextHopIpAdress () const
 {
 	return this->nextHopIpAdress;
 }
 
+/*
+* Vrati lifetime zaznamu
+*/
 std::string Route::getTime() const
 {
 	return this->time;
 }
 
+/*
+* Vypise zaznam
+*/
 void Route::toString() const
 {
 	std::cout << "IP: " << this->ipAdress << " MASKA: " << "/" << this->mask << " NEXT-HOP: " << this->nextHopIpAdress << " TTL: " << this->time << std::endl;
 }
 
-std::string Route::getLifeTimeSeconds() const
-{
-	return std::to_string(lifeTimeSeconds);
-}
-
+/*
+* Vrati lifetime v sekundach
+*/
 size_t Route::getLifeTimeSecondsInt() const
 {
 	return lifeTimeSeconds;
 }
 
+/*
+* Destruktor triedy Route
+*/
 Route::~Route()
 {
 }

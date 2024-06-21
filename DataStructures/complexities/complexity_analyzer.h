@@ -123,9 +123,9 @@ namespace ds::utils
     class ComplexityAnalyzer :
         public LeafAnalyzer,
         public std::conditional_t<
-            std::is_default_constructible_v<Structure>,
-            PrototypeFactory<Structure>,
-            IPrototypeFactory<Structure>
+        std::is_default_constructible_v<Structure>,
+        PrototypeFactory<Structure>,
+        IPrototypeFactory<Structure>
         >
     {
     public:

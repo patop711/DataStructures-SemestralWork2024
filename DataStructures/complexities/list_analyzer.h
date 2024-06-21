@@ -17,7 +17,7 @@ namespace ds::utils
         explicit ListAnalyzer(const std::string& name);
 
     protected:
-        void growToSize(List& structure, size_t size) override;        
+        void growToSize(List& structure, size_t size) override;
 
         size_t getRandomIndex() const;
         int getRandomData() const;

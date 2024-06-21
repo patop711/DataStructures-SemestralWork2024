@@ -164,11 +164,10 @@ namespace ds::adt {
         }
         size_t myIndex = this->removalIndex_;
         size_t otherIndex = (*otherImplicitQueue).removalIndex_;
-        while (myIndex != this->insertionIndex_)  // postupne prechadza prvok po prvku a porovnava data na rovnakom indexe v oboch strukturach
+        while (myIndex != this->insertionIndex_)
         {
             if (this->getSequence()->access(myIndex)->data_ != (*otherImplicitQueue).getSequence()->access(otherIndex)->data_)
             {
-                // v momente, ked narazi na rozlicne data na rovnakom indexe v oboch strukturach, porovnanie skonci nepravdou
                 return false;
             }
         }
